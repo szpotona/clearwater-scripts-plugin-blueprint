@@ -1,12 +1,12 @@
-tosca_definitions_version: cloudify_dsl_1_2
+tosca_definitions_version: cloudify_dsl_1_3
 
 ########################################################
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
 # - http://www.getcloudify.org/spec/vsphere-plugin/1.3.1/plugin.yaml
-  - vsphere-plugin.yaml
-  - http://www.getcloudify.org/spec/diamond-plugin/1.3.1/plugin.yaml
+  - http://www.getcloudify.org/spec/vsphere-plugin/2.0/plugin.yaml
+  - http://www.getcloudify.org/spec/diamond-plugin/1.3.3/plugin.yaml
 
 ########################################################
 
@@ -48,17 +48,26 @@ inputs:
             User for connecting to application VMs
 
     template_name:
+        default: 'ubuntu-14.04.4-x86_64-tmpl'
         description: >
             Template to clone VMs from
 
     management_network:
+        default: 'VM Network'
         description: >
             Which network to deploy the VM on
 
     external_network:
+        default: 'external'
         description: >
             Which network to deploy the VM on
 
+    management_switch_distributed:
+        default: false
+
+    external_switch_distributed:
+        default: false
+        
 ########################################################
 
 node_templates:
@@ -70,18 +79,18 @@ node_templates:
     policy_node:
         type: policy_node_type
         relationships:
-           - target: bono_vm
+           - target: bono-vm
              type: cloudify.relationships.depends_on
-           - target: sprout_vm
+           - target: sprout-vm
              type: cloudify.relationships.depends_on
            - target: a_node
              type: cloudify.relationships.contained_in
         properties:
            nodes_to_monitor:
-              - bono_vm
-              - sprout_vm
+              - bono-vm
+              - sprout-vm
 
-    bono_vm:
+    bono-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -93,13 +102,13 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
         relationships:
-           - target: homestead_vm
+           - target: homestead-vm
              type: cloudify.relationships.depends_on
         interfaces:
             cloudify.interfaces.monitoring_agent:
@@ -119,7 +128,7 @@ node_templates:
                      collectors_config:
                            CPUCollector: {}
 
-    ellis_vm:
+    ellis-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -131,16 +140,16 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
         relationships:
-            - target: bono_vm
+            - target: bono-vm
               type: cloudify.relationships.depends_on
 
-    sprout_vm:
+    sprout-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -152,15 +161,15 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
         relationships:
-           - target: homer_vm
+           - target: homer-vm
              type: cloudify.relationships.depends_on
-           - target: homestead_vm
+           - target: homestead-vm
              type: cloudify.relationships.depends_on
 
         interfaces:
@@ -180,7 +189,7 @@ node_templates:
                   inputs:
                      collectors_config:
                            CPUCollector: {}
-    homer_vm:
+    homer-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -192,13 +201,13 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
 
-    homestead_vm:
+    homestead-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -210,14 +219,14 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
 
 
-    ralf_vm:
+    ralf-vm:
         type: cloudify.vsphere.nodes.Server
         properties:
             cloudify_agent:
@@ -229,26 +238,26 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
 
-    dns_vm:
+    dns-vm:
         type: cloudify.vsphere.nodes.Server
         relationships:
-            - target: bono_vm
+            - target: bono-vm
               type: cloudify.relationships.depends_on
-            - target: ellis_vm
+            - target: ellis-vm
               type: cloudify.relationships.depends_on
-            - target: sprout_vm
+            - target: sprout-vm
               type: cloudify.relationships.depends_on
-            - target: homer_vm
+            - target: homer-vm
               type: cloudify.relationships.depends_on
-            - target: homestead_vm
+            - target: homestead-vm
               type: cloudify.relationships.depends_on
-            - target: ralf_vm
+            - target: ralf-vm
               type: cloudify.relationships.depends_on
 
         properties:
@@ -261,10 +270,10 @@ node_templates:
             networking:
                 connect_networks:
                     - name: { get_input: management_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: management_switch_distributed }
                       management: True
                     - name: { get_input: external_network }
-                      switch_distributed: True
+                      switch_distributed: { get_input: external_switch_distributed }
                       external: True
 
 ########################################################
@@ -275,11 +284,11 @@ node_templates:
               create:
                  implementation: scripts/bono.sh
                  inputs:
-                    public_ip: { get_attribute: [ bono_vm, public_ip ] }
-                    dns_ip: { get_attribute: [ dns_vm, ip ]  }
+                    public_ip: { get_attribute: [ bono-vm, public_ip ] }
+                    dns_ip: { get_attribute: [ dns-vm, ip ]  }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: bono_vm
+               target: bono-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -290,11 +299,11 @@ node_templates:
               create:
                  implementation: scripts/ellis.sh
                  inputs:
-                    public_ip: { get_attribute: [ellis_vm, public_ip] }
-                    dns_ip: { get_attribute: [dns_vm, ip] }
+                    public_ip: { get_attribute: [ellis-vm, public_ip] }
+                    dns_ip: { get_attribute: [dns-vm, ip] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: ellis_vm
+               target: ellis-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -305,10 +314,10 @@ node_templates:
               create:
                  implementation: scripts/ralf.sh
                  inputs:
-                    dns_ip: { get_attribute: [ dns_vm, ip ] }
+                    dns_ip: { get_attribute: [ dns-vm, ip ] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: ralf_vm
+               target: ralf-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -319,10 +328,10 @@ node_templates:
               create:
                  implementation: scripts/homestead.sh
                  inputs:
-                    dns_ip: { get_attribute: [dns_vm, ip] }
+                    dns_ip: { get_attribute: [dns-vm, ip] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: homestead_vm
+               target: homestead-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -333,10 +342,10 @@ node_templates:
               create:
                  implementation: scripts/homer.sh
                  inputs:
-                    dns_ip: { get_attribute: [dns_vm, ip] }
+                    dns_ip: { get_attribute: [dns-vm, ip] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: homer_vm
+               target: homer-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -347,10 +356,10 @@ node_templates:
               create:
                  implementation: scripts/sprout.sh
                  inputs:
-                    dns_ip: { get_attribute: [dns_vm, ip] }
+                    dns_ip: { get_attribute: [dns-vm, ip] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: sprout_vm
+               target: sprout-vm
             -  type: dns_client_uses_dns_server
                target: dns_app
 
@@ -361,10 +370,10 @@ node_templates:
               create:
                  implementation: scripts/dns.sh
                  inputs:
-                    dns_ip: { get_attribute: [dns_vm, ip] }
+                    dns_ip: { get_attribute: [dns-vm, ip] }
         relationships:
             -  type: cloudify.relationships.contained_in
-               target: dns_vm
+               target: dns-vm
 
 ########################################################
 
@@ -379,7 +388,7 @@ node_templates:
                        command_prefix: /usr/bin/sudo
         relationships:
                 -  type: cloudify.relationships.contained_in
-                   target: dns_vm
+                   target: dns-vm
                 -  type: cloudify.relationships.connected_to
                    target: dns_app
                 -  type: cloudify.relationships.connected_to
@@ -399,6 +408,6 @@ outputs:
   web:
     description: Web application endpoint
     value:
-      ip_ellis: { get_attribute: [ ellis_vm, public_ip ] }
-      ip_bono: { get_attribute: [ bono_vm, public_ip ] }
+      ip_ellis: { get_attribute: [ ellis-vm, public_ip ] }
+      ip_bono: { get_attribute: [ bono-vm, public_ip ] }
       signup_code: secret
