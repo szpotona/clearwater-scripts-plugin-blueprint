@@ -52,8 +52,8 @@ inputs:
     vsphere_password:
         default: ""
     
-    vsphere_url:
-        default: "https://vCenter.vsphere.local"
+    vsphere_host:
+        default: ""
     
     vsphere_port:
         default: 443
@@ -62,7 +62,7 @@ inputs:
         default: "Datacenter"
     
     vsphere_resource_pool_name:
-        default: "Resource pool"
+        default: "Resources"
     
     vsphere_auto_placement:
         type: boolean
@@ -78,7 +78,7 @@ inputs:
             User for connecting to application VMs
 
     template_name:
-        default: "ubuntu-14.04.4-x86_64-tmpl"
+        default: "ubuntu-14.04.5-x86_64-tmpl"
         description: >
             Template to clone VMs from
 
@@ -102,10 +102,10 @@ inputs:
         default: "10.10.111.101"
 
     bono_ip:
-        default: "10.10.111.102"
+        default: "10.10.111.108" #
 
     sprout_ip:
-        default: "10.10.111.103"
+        default: "10.10.111.109" #
 
     homer_ip:
         default: "10.10.111.104"
@@ -135,7 +135,7 @@ dsl_definitions:
     connection_config: &connection_config
         username: { get_input: vsphere_username }
         password: { get_input: vsphere_password }
-        usr: { get_input: vsphere_url }
+        host: { get_input: vsphere_host }
         port: { get_input: vsphere_port }
         datacenter_name: { get_input: vsphere_datacenter }
         resource_pool_name: { get_input: vsphere_resource_pool_name }
@@ -407,7 +407,7 @@ node_templates:
             -  type: cloudify.relationships.contained_in
                target: ellis-vm
             -  type: dns_client_uses_dns_server
-               target: dns-app
+               target: dns_app
 
     ralf_app:
         type: cloudify.nodes.SoftwareComponent
