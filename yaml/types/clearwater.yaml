@@ -83,7 +83,7 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: scripts/monitoring/proxy_snmp/append_proxy_snmp_conf.py
+          implementation: cloudify-diamond-snmp-extension-master/scripts/append_proxy_snmp_conf.py
           executor: central_deployment_agent
           inputs:
             port:
@@ -115,7 +115,7 @@ relationships:
     source_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: scripts/monitoring/proxy_snmp/append_proxy_snmp_conf.py
+          implementation: cloudify-diamond-snmp-extension-master/scripts/append_proxy_snmp_conf.py
           executor: central_deployment_agent
           inputs:
             port:
