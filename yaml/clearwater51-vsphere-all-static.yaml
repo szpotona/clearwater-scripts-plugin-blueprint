@@ -6,6 +6,8 @@ imports:
   - http://www.getcloudify.org/spec/cloudify/3.4/types.yaml
   - http://www.getcloudify.org/spec/vsphere-plugin/2.0/plugin.yaml
   - http://www.getcloudify.org/spec/diamond-plugin/1.3.3/plugin.yaml
+  - types/monitoring.yaml
+  - types/clearwater.yaml
 
 ########################################################
 
@@ -25,6 +27,44 @@ relationships:
 
 ########################################################
 node_types:
+
+  clearwater.nodes.MonitoredServer:
+    derived_from: cloudify.vsphere.nodes.Server
+    properties:
+      cloudify_agent:
+        default:
+          user: { get_input: agent_user }
+      server:
+        default:
+          template: { get_input: template_name }
+          cpus: { get_input: vm_cpu }
+          memory: { get_input: vm_memory }
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+        install:
+          implementation: diamond.diamond_agent.tasks.install
+          inputs:
+            diamond_config:
+              default:
+                interval: 5
+        start: diamond.diamond_agent.tasks.start
+        stop: diamond.diamond_agent.tasks.stop
+        uninstall: diamond.diamond_agent.tasks.uninstall
+
+      cloudify.interfaces.monitoring:
+          start:
+            implementation: diamond.diamond_agent.tasks.add_collectors
+            inputs:
+              collectors_config:
+                default:
+                  CPUCollector: {}
+                  MemoryCollector: {}
+                  LoadAverageCollector: {}
+                  DiskUsageCollector:
+                    config:
+                      devices: x?vd[a-z]+[0-9]*$
+                  NetworkCollector: {}
+
     policy_node_type:
        derived_from: cloudify.nodes.SoftwareComponent
        properties:
@@ -164,14 +204,8 @@ node_templates:
               - sprout-vm
 
     bono-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -188,33 +222,10 @@ node_templates:
         relationships:
            - target: homestead-vm
              type: cloudify.relationships.depends_on
-        interfaces:
-            cloudify.interfaces.monitoring_agent:
-               install:
-                  implementation: diamond.diamond_agent.tasks.install
-                  inputs:
-                     diamond_config:
-                        interval: 5
-               start: diamond.diamond_agent.tasks.start
-               stop: diamond.diamond_agent.tasks.stop
-               uninstall: diamond.diamond_agent.tasks.uninstall
-
-            cloudify.interfaces.monitoring:
-               start:
-                  implementation: diamond.diamond_agent.tasks.add_collectors
-                  inputs:
-                     collectors_config:
-                           CPUCollector: {}
 
     ellis-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -232,14 +243,8 @@ node_templates:
               type: cloudify.relationships.depends_on
 
     sprout-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -258,33 +263,9 @@ node_templates:
            - target: homestead-vm
              type: cloudify.relationships.depends_on
 
-        interfaces:
-            cloudify.interfaces.monitoring_agent:
-               install:
-                  implementation: diamond.diamond_agent.tasks.install
-                  inputs:
-                     diamond_config:
-                        interval: 5
-               start: diamond.diamond_agent.tasks.start
-               stop: diamond.diamond_agent.tasks.stop
-               uninstall: diamond.diamond_agent.tasks.uninstall
-
-            cloudify.interfaces.monitoring:
-               start:
-                  implementation: diamond.diamond_agent.tasks.add_collectors
-                  inputs:
-                     collectors_config:
-                           CPUCollector: {}
-
     homer-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -299,14 +280,8 @@ node_templates:
             connection_config: *connection_config
 
     homestead-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -321,14 +296,8 @@ node_templates:
             connection_config: *connection_config
 
     ralf-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -343,7 +312,7 @@ node_templates:
             connection_config: *connection_config
 
     dns-vm:
-        type: cloudify.vsphere.nodes.Server
+        type: clearwater.nodes.MonitoredServer
         relationships:
             - target: bono-vm
               type: cloudify.relationships.depends_on
@@ -359,12 +328,6 @@ node_templates:
               type: cloudify.relationships.depends_on
 
         properties:
-            cloudify_agent:
-                user: { get_input: cloudify_agent }
-            server:
-                template: { get_input: template_name }
-                cpus: { get_input: vm_cpu }
-                memory: { get_input: vm_memory }
             networking:
                 dns_servers: { get_inputs: dns_servers }
                 connect_networks:
@@ -476,6 +439,14 @@ node_templates:
         relationships:
             -  type: cloudify.relationships.contained_in
                target: dns-vm
+
+  proxy_node:
+    type: SNMPManagerProxy
+    relationships:
+      - type: monitors_bono_nodes
+        target: bono_app
+      - type: monitors_sprout_nodes
+        target: sprout_app
 
 ########################################################
 
